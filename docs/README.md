@@ -3,7 +3,7 @@ home: true
 heroText: 捡到一颗白矮星
 tagline: 每天都在期待某个时间点
 actionText: go go go →
-actionLink: /mylife/vue
+actionLink: /vue/vue-read-1
 features:
 - title: Us
   details: Minimal setup with markdown-centered project structure helps you focus on writing.
