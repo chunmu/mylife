@@ -9,19 +9,24 @@ module.exports = {
     ],
     sidebar: [
       '',
+      ['/todo/', '要和宝宝要做的一百件事'],
+      ['/noagain/', '让宝宝不开心的事情'],
+      ['/source/', '资源收集'],
       {
-        title: 'vue',
+        title: 'vue-2.6.9',
         children: [
-          ['/vue/vue-read-1', '第一篇 import vue后发生的事情'],
-          ['/vue/vue-read-2', '第二篇 模板解析与ast语法树生成'],
-          ['/vue/vue-read-3', '第三篇 构造render'],
-          ['/vue/vue-read-4', '第四篇 实例初始化过程'],
-          ['/vue/vue-read-5', '第五篇 响应式原理observe'],
-          ['/vue/vue-read-6', '第六篇 应用dom渲染'],
+          ['/vue-2.6.9/package', 'package.json']
         ]
       },
-      ['/less/', 'less样式超集'],
-      ['/color/', 'color颜色']
+      {
+        title: 'javascript',
+        children: [
+          ['/javascript/javascript-1', 'javascript基础语法记录'],
+          ['/javascript/crossenv', 'cross-env源码分析'],
+        ]
+      },
+      ['/less/', 'less'],
+      ['/color/', 'color']
     ]
   }
 }

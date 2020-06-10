@@ -1,7 +1,7 @@
 ---
 home: true
 actionText: 阅读文档 →
-actionLink: /vue/vue-read-1
+actionLink: /todo/
 sidebarDepth: 3
 features:
 - title: 记录点点滴滴
