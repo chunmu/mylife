@@ -15,7 +15,7 @@ var a  = arguments[0] !== (void 0 ) ? arguments[0] : 2;
 ```
 
 
-## AMD UMD,CMD,CommonJS,ES6 module 
+## AMD,UMD,CMD,CommonJS,ES6module
 
 
 ### commonJS
@@ -122,6 +122,9 @@ define(function (require, exports, module){
 
 ```
 
+<br>
+<br>
+<br>
 
 ### ES6 module
 
@@ -187,7 +190,12 @@ Promise.all([
 
 ```
 
-## 关于js宏任务微任务 promise比setTimeout执行快的问题
+<br>
+<br>
+<br>
+<br>
+
+## js宏任务微任务,promise&setTimeout
 
 ### js运行机制
 

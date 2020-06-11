@@ -13,16 +13,16 @@ module.exports = {
       ['/noagain/', '让宝宝不开心的事情'],
       ['/source/', '资源收集'],
       {
-        title: 'vue-2.6.9',
+        title: 'vue-2.6.0',
         children: [
-          ['/vue-2.6.9/package', 'package.json']
+          ['/vue-2.6.0/import', 'import vue后发生的事情']
         ]
       },
       {
         title: 'javascript',
         children: [
           ['/javascript/javascript-1', 'javascript基础语法记录'],
-          ['/javascript/crossenv', 'cross-env源码分析'],
+          ['/javascript/crossenv', 'cross-env源码分析']
         ]
       },
       ['/less/', 'less'],
