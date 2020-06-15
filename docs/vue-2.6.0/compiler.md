@@ -953,6 +953,57 @@ let inPre = false                           // 是否在<pre>标签中
 * 3. 总结一下，优化器就是给每个节点打上静态或者非静态标记   
 * */
 
+function isStatic (node: ASTNode): boolean {
+  if (node.type === 2) { // expression
+    return false
+  }
+  if (node.type === 3) { // text
+    return true
+  }
+  return !!(node.pre || (
+    !node.hasBindings && // no dynamic bindings
+    !node.if && !node.for && // not v-if or v-for or v-else
+    !isBuiltInTag(node.tag) && // not a built-in
+    isPlatformReservedTag(node.tag) && // not a component
+    !isDirectChildOfTemplateFor(node) &&
+    Object.keys(node).every(isStaticKey)
+  ))
+}
+
+function markStatic (node: ASTNode) {
+  // 判断节点本事是否静态节点
+  node.static = isStatic(node)
+  if (node.type === 1) {
+    // do not make component slot content static. this avoids
+    // 1. components not able to mutate slot nodes
+    // 2. static slot content fails for hot-reloading
+    if (
+      !isPlatformReservedTag(node.tag) &&
+      node.tag !== 'slot' &&
+      node.attrsMap['inline-template'] == null
+    ) {
+      return
+    }
+    for (let i = 0, l = node.children.length; i < l; i++) {
+      const child = node.children[i]
+      markStatic(child)
+      // 如果子节点不满足静态要求 回溯到父节点也应该非静态节点
+      if (!child.static) {
+        node.static = false
+      }
+    }
+    if (node.ifConditions) {
+      for (let i = 1, l = node.ifConditions.length; i < l; i++) {
+        const block = node.ifConditions[i].block
+        markStatic(block)
+        if (!block.static) {
+          node.static = false
+        }
+      }
+    }
+  }
+}
+
 ```
 
 <br>

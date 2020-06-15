@@ -1,7 +1,6 @@
 
 > 本人前端小透明一枚，如果对vue理解有什么不对或者不够的地方，请各位大大理解斧正，谢谢支持。
 > 本篇文章对应的vue源码为2.6.0-release版本，阅读愉快。
-> [本人vue行级源码阅读记录](https://github.com/chunmu/vue-2.6.0)
 
 ## 1. vue工程结构
 
@@ -109,41 +108,45 @@ module.exports = {
 
 ```
 
-### 1.8 test
-
-> 测试代码目录，相当好用  将会加入本人的一些测试记录
-
-
-
-## 2 一切开始的地方 Vue构造函数的定义位置
+## 2. Vue
 
 在使用vue的时候  会有下面这些用法
 
-```
+```javascript
+
 Vue.mixins({})
 
 new Vue({
-    created () {
-        // this
-    }
+  created () {
+    // this
+  }
 })
 
 ```
 
 所以肯定有这么一个地方  定义 Vue () {}，我们可以从config中的入口文件开始寻找Vue
-```
+
+```javascript
+
 => scripts/config web/entry-runtime-with-compiler      // 打包入口web/entry-runtime-with-compiler
 => src/platforms/web/entry-runtime-with-compiler.js    // import Vue from './runtime/index'
 => src/platforms/web/runtime/index.js                  // import Vue from 'core/index'
 => src/core/index                                      // import Vue from './instance/index'
 => src/core/instance/index                             // 在这里 function Vue
-```
-
-### 2.1 详解Vue定义
 
 ```
+
+### 2.1 Vue声明
+
+
+Vue构造函数声明定义
+
+```javascript
+
 function Vue (options) {
   // 在测试或者开发环境检测实例是否是通过new Vue的形式生成的 否则告警 因为后续的所有操作都是围绕vue实例进行
+  // new Vue() ✔
+  // Vue()     ×
   if (process.env.NODE_ENV !== 'production' &&
     !(this instanceof Vue)
   ) {
@@ -154,22 +157,24 @@ function Vue (options) {
 
 ```
 
-## 3. Vue全局API包装历程
+### 2.2 Vue.prototype API & Vue API
 
-> 接下来是vue的全局API包装 有部分内容是进行api挂载，我们可能只进行结果描述而不进行实际分析 具体使用会在后续阐明  分为实例和构造函数API挂载 区别请查看[一张图理解JS的原型（prototype、_proto_、constructor的三角关系）](https://juejin.im/post/5b729c24f265da280f3ad010)
+> 接下来是vue的全局API包装 分为实例原型对象挂载和构造函数API挂载 区别请查看[一张图理解JS的原型（prototype、_proto_、constructor的三角关系）](https://juejin.im/post/5b729c24f265da280f3ad010)
+> 没有进行实际功能讲解的  都将会在后续文章中出现
 
-### 3.1 initMixin
+
+#### 2.2.1 initMixin
 
 ```
 // 初始化方法挂载
 Vue.prototype._init = function () {}
 ```
 
-### 3.2 stateMixin
+#### 2.2.2 stateMixin
 
 > data, props数据代理设置
 
-```
+```javascript
   /**
    * 数据劫持 这也是Vue实现原理核心 这边用于数据代理
    * 所有Vue实例中形如this.xxx访问data都是在访问this._data.xxx
@@ -196,42 +201,53 @@ Vue.prototype._init = function () {}
   Object.defineProperty(Vue.prototype, '$data', dataDef)
   Object.defineProperty(Vue.prototype, '$props', propsDef)
 ```
-```
+
+```javascript
+
   // observer中的set，delete方法
   Vue.prototype.$set = set                  // 设置观测对象
   Vue.prototype.$delete = del               // 观测对象的删除
-  Vue.prototype.$watch = function () {}     // 实例上的$watch
-```
-
-### 3.3 eventsMixin
+  Vue.prototype.$watch                      // 实例上的$watch
 
 ```
+
+#### 2.2.3 eventsMixin
+
+```javascript
+
   Vue.prototype.$on = function () {}      // 添加监听器
   Vue.prototype.$once = function () {}    // 添加一次性监听器
   Vue.prototype.$off = function () {}     // 卸载监听器
   Vue.prototype.$emit = function () {}    // 发射事件
-```
-
-### 3.4 lifecycleMixin
 
 ```
+
+#### 2.2.4 lifecycleMixin
+
+```javascript
+
   Vue.prototype._update = function () {}         // 视图更新 注重点在于视图组件更新
   Vue.prototype.$forceUpdate = function () {}    // 强制更新 注重点在于强制触发observer相应更新
   Vue.prototype.$destroy = function () {}        // 销毁当前实例
+
 ```
 
-### 3.5 renderMixin
+#### 2.2.5 renderMixin
 
 > 渲染相关的处理和API挂载
 
-```
-  Vue.prototype.$nextTick = function () {}         // 视图更新 注重点在于视图组件更新
+```javascript
+
+  // https://chunmu.github.io/mylife/vue-2.6.0/api.html#_1-nexttick
+  Vue.prototype.$nextTick = function () {}         // 视图更新 注重点在于视图组件更新 请查阅
   Vue.prototype._render = function () {}           // 强制更新 注重点在于强制触发observer相应更新
-```
-
-#### 3.5.1 installRenderHelpers
 
 ```
+
+#### 2.2.6 installRenderHelpers
+
+```javascript
+
 // 后续将逐一补充其作用 都是挂载操作 没有执行
 export function installRenderHelpers (target: any) {
   target._o = markOnce                  // 标记once指令相关属性
@@ -255,13 +271,14 @@ export function installRenderHelpers (target: any) {
 
 ```
 
-### 3.6 initGlobalAPI
+### 2.3 initGlobalAPI
 
 > 可以注意到前面都是配置Vue.prototype实例方法  接下来是构造函数API挂载
 
-#### 3.6.1 代理config
+#### 2.3.1 代理config
 
-```
+```javascript
+
   /**
    * 劫持config配置的set方法 只读对象 不应该直接修改Vue.config  而是在传入参数中按需配置字段
    * */
@@ -269,17 +286,19 @@ export function installRenderHelpers (target: any) {
   configDef.get = () => config
   if (process.env.NODE_ENV !== 'production') {
     configDef.set = () => {
-      
       warn(
         'Do not replace the Vue.config object, set individual fields instead.'
       )
     }
   }
   Object.defineProperty(Vue, 'config', configDef)
+
 ```
 
-#### 3.6.2 全局配置config解析
-```
+#### 2.3.2 全局配置config解析
+
+```javascript
+
 // 关于config全局配置字段解析 有遗漏的后续逐渐补上
 export default ({
   optionMergeStrategies: Object.create(null),             // 各种合并策略的配置 最好不要去改动它 除非对它的机制非常熟悉
@@ -304,29 +323,35 @@ export default ({
 
 ```
 
-#### 3.6.3 Vue.util
+#### 2.3.3 Vue.util
 
-```
+```javascript
+
   Vue.util = {
     warn,                    // 有一段格式化vue实例调用栈的处理 后续补充详情
     extend,                  // 工具文件中自定义了extend方法 for...in循环取值设值 可遍历原型链上扩展属性 assign不会
+    // https://chunmu.github.io/mylife/vue-2.6.0/api.html#_1-mergeOptions
     mergeOptions,            // options合并策略 new Vue(options)
     defineReactive           // observer工具方法
   }
-```
 
 ```
+
+```javascript
+
   Vue.prototype.set = function () {}                // set
+  // https://chunmu.github.io/mylife/vue-2.6.0/api.html#_1-nexttick
   Vue.prototype.delete = function () {}             // delete
   Vue.prototype.nextTick = function () {}           // nextTick
   Vue.prototype.observable = function () {}         // observable
+
 ```
 
-#### 3.6.4 Vue.options初始化
+#### 2.3.4 Vue.options初始化
 
 > 初始化构造函数上options 将作为所有后续options的祖先级对象
 
-```
+```javascript
   /**
    * Vue.options = {
    *   components: {},
@@ -344,15 +369,16 @@ export default ({
   extend(Vue.options.components, builtInComponents)     // 全局内置组件keep-alive
 ```
 
-#### 3.6.5 initUse Vue.use
+#### 2.3.5 initUse Vue.use
 
-Vue.use的实现部分，提供一个操作Vue全局或者实例相关逻辑或者api的聚合，规范化插件安装，要是每个库都来一遍import Vue => Vue.use 人都傻了
+Vue.use的实现部分，提供一个操作Vue全局或者实例相关逻辑或者api的聚合，规范化插件安装
 
 - use定义部分
 
 > use方法返回值是Vue 所以可以链式安装插件 Vue.use(plugin1).use(plugin2)
 
 ```javascript
+
   Vue.use = function (plugin: Function | Object) {
     // 判断同一插件是否重复注册
     const installedPlugins = (this._installedPlugins || (this._installedPlugins = []))
@@ -409,11 +435,11 @@ MyPlugin.install = function (Vue, options) {
 
 ```
 
-#### 3.6.6 initMixin Vue.mixin
+#### 2.3.6 initMixin Vue.mixin
 
 - Vue.mixin定义
 
-本质是直接调用mergeOptions来进行mixins选项合并，这边就牵扯到了我们要关注的一个重点，options的合并策略，里面内容比较多，我们放后面用实际代码来解析
+本质是直接调用mergeOptions来进行mixins选项合并，这边就牵扯到了我们要关注的一个重点，options的合并策略
 
 ```javascript
   Vue.mixin = function (mixin: Object) {
@@ -423,20 +449,109 @@ MyPlugin.install = function (Vue, options) {
 
 ```
 
-#### 3.6.7 initExtend
+#### 2.3.7 initExtend extend的核心实现
 
 ```javascript
 
 Vue.extend = function () {}              // 组件扩展核心方法 后续用实际代码来解析
 
+  /**
+   * Each instance constructor, including Vue, has a unique
+   * cid. This enables us to create wrapped "child
+   * constructors" for prototypal inheritance and cache them.
+   */
+  Vue.cid = 0
+  let cid = 1
+
+  /**
+   * Class inheritance
+   */
+  Vue.extend = function (extendOptions: Object): Function {
+    extendOptions = extendOptions || {}
+    const Super = this
+    const SuperId = Super.cid
+    const cachedCtors = extendOptions._Ctor || (extendOptions._Ctor = {})
+    // options上挂载_Ctor用于储存
+    // 假定需要扩展的options = targetOptions 则下次继续用这个options去extend
+    // 则会有现成的 已经存在的符合条件的扩展Vue类构造函数
+    // 缓存已经扩展过的构造函数
+    if (cachedCtors[SuperId]) {
+      return cachedCtors[SuperId]
+    }
+    // 扩展一般用来建设组件
+    const name = extendOptions.name || Super.options.name
+    if (process.env.NODE_ENV !== 'production' && name) {
+      validateComponentName(name)
+    }
+
+    // 类似Vue的构造方法
+    const Sub = function VueComponent (options) {
+      this._init(options) // 当调用构造方法是 son = new Sub() 调用_init方法
+    }
+    // 改写Sub的prototype，constructor指向Vue，继承所有Vue上实例原型链上的方法属性
+    Sub.prototype = Object.create(Super.prototype)
+    // 调转原型链的构造函数执行Sub  旧有的是指向Vue
+    Sub.prototype.constructor = Sub
+    Sub.cid = cid++ // constructor ID，这边是跳过了1... 如果用于统计 则少了1  卧槽 总数是对的
+    // 此处调用mergeOptions 顶层vue
+    // Super.options上含有_base 会继承至Sub的options中
+    Sub.options = mergeOptions(
+      Super.options,
+      extendOptions
+    )
+    // 指定super
+    Sub['super'] = Super
+
+    // For props and computed properties, we define the proxy getters on
+    // the Vue instances at extension time, on the extended prototype. This
+    // avoids Object.defineProperty calls for each instance created.
+    if (Sub.options.props) {
+      initProps(Sub) // 设置props代理访问  this.xxx = this._props.xxx
+    }
+    if (Sub.options.computed) {
+      initComputed(Sub) // 设计到即时相应部分 后续关注
+    }
+
+    // allow further extension/mixin/plugin usage
+    // 继承来自super的属性和方法
+    Sub.extend = Super.extend
+    Sub.mixin = Super.mixin
+    Sub.use = Super.use
+
+    // create asset registers, so extended classes
+    // can have their private assets too.
+    // Vue中的conponents filters directives继承
+    ASSET_TYPES.forEach(function (type) {
+      Sub[type] = Super[type]
+    })
+    // enable recursive self-lookup
+    // 自身可以注册为一个组件
+    if (name) {
+      Sub.options.components[name] = Sub
+    }
+
+    // keep a reference to the super options at extension time.
+    // later at instantiation we can check if Super's options have
+    // been updated.
+    Sub.superOptions = Super.options
+    Sub.extendOptions = extendOptions
+    // 密封options
+    Sub.sealedOptions = extend({}, Sub.options)
+
+    // cache constructor
+    // 注意  用的是superId  储存的是super执行扩展之后的构造函数
+    cachedCtors[SuperId] = Sub
+    return Sub
+  }
+
 ```
 
-#### 3.6.8 initAssetRegisters
+#### 2.3.8 initAssetRegisters
 
 > 这边就是Vue.component， Vue.directive，Vue.filter全局API的定义了
 
 三段注册逻辑混合在一起 增加了不必要的type判断，不过又要与ASSET_TYPES保持一致，暂时没想到更好的解决方式 不过这个开销不大 不会有性能问题
-
+个人觉得，这种资源级别的处理可以单独拆分 毕竟就算新引入一种资源  也很大可能有逻辑改动 所以注册方法加一个也就可以接受了
 ```javascript
 
   ASSET_TYPES.forEach(type => {
@@ -481,7 +596,9 @@ Vue.extend = function () {}              // 组件扩展核心方法 后续用�
 
 ```
 
-#### 3.6.9 validateComponentName  组件名称合法性校验
+#### 2.3.10 validateComponentName
+
+>组件名称合法性校验
 
 ```javascript
   // 普遍支持unicode字符 包括中文  数学符号 emoji等 不过最好不要这么玩
@@ -501,7 +618,11 @@ Vue.extend = function () {}              // 组件扩展核心方法 后续用�
 
 ```
 
-### 3.7 ssr服务端渲染想相关
+
+## 3. 剩余挂载
+
+
+### 3.1 ssr服务端渲染想相关
 
 > 暂时不关注这个
 
@@ -525,7 +646,7 @@ Object.defineProperty(Vue, 'FunctionalRenderContext', {
 
 ```
 
-### 3.8 Vue的版本植入
+### 3.2 Vue的版本植入
 
 ```javascript
 
@@ -541,7 +662,7 @@ const vars = {
 
 ```
 
-### 3.9 平台相关utils挂载和预置平台相关的内置组件和平台相关的__patch__方法
+### 3.3 平台相关utils挂载和预置平台相关的内置组件和平台相关的__patch__方法
 
 ```javascript
 
@@ -562,7 +683,7 @@ Vue.prototype.__patch__ = inBrowser ? patch : noop              // 分发渲染�
 
 ```
 
-### 3.10 mount方法 挂载api 核心方法 
+#### 3.4 mount方法 挂载api 核心方法 
 
 ```javascript
 
@@ -577,7 +698,7 @@ Vue.prototype.$mount = function (
 
 ```
 
-### 3.11 关于开发相关的温馨提示和devtools的初始化
+#### 3.3.5 关于开发相关的温馨提示和devtools的初始化
 
 ```javascript
 

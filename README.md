@@ -1,7 +1,7 @@
 ---
 home: true
 actionText: 阅读文档 →
-actionLink: /todo/
+actionLink: /myself/
 sidebarDepth: 3
 features:
 - title: 记录点点滴滴
