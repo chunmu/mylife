@@ -153,3 +153,112 @@ function normalizeDirectives (options: Object) {
 }
 
 ```
+
+
+## 6. invokeWithErrorHandling handler调用统一处理
+
+```javascript
+
+// 假设this.on(key, fn)
+// handler.apply(this=vm, args)
+export function invokeWithErrorHandling (
+  handler: Function,
+  context: any,
+  args: null | any[],
+  vm: any,
+  info: string
+) {
+  let res
+  try {
+    res = args ? handler.apply(context, args) : handler.call(context)
+    if (isPromise(res)) {
+      res.catch(e => handleError(e, vm, info + ` (Promise/async)`))
+    }
+  } catch (e) {
+    handleError(e, vm, info)
+  }
+  return res
+}
+
+```
+
+
+## 7. $updateListeners更新和注销事件注册
+
+
+```javascript
+
+export function updateListeners (
+  on: Object,
+  oldOn: Object,
+  add: Function,
+  remove: Function,
+  createOnceHandler: Function,
+  vm: Component
+) {
+  let name, def, cur, old, event
+  for (name in on) {
+    def = cur = on[name]
+    old = oldOn[name]
+    // 规范化事件名称 包括冒泡标记 once标记 passive标记
+    event = normalizeEvent(name)
+    /* istanbul ignore if */
+    if (__WEEX__ && isPlainObject(def)) {
+      cur = def.handler
+      event.params = def.params
+    }
+    // 无效绑定警告
+    if (isUndef(cur)) {
+      process.env.NODE_ENV !== 'production' && warn(
+        `Invalid handler for event "${event.name}": got ` + String(cur),
+        vm
+      )
+    } else if (isUndef(old)) {
+      // 是否已经构建过handler了
+      if (isUndef(cur.fns)) {
+        cur = on[name] = createFnInvoker(cur, vm)
+      }
+      // 如果是once修饰 创建特有的调用方法
+      if (isTrue(event.once)) {
+        cur = on[name] = createOnceHandler(event.name, cur, event.capture)
+      }
+      add(event.name, cur, event.capture, event.passive, event.params)
+    } else if (cur !== old) {
+      old.fns = cur
+      on[name] = old
+    }
+  }
+  // oldListeners中存在 listeners中不存在的  当成需要注销的事件
+  for (name in oldOn) {
+    if (isUndef(on[name])) {
+      event = normalizeEvent(name)
+      remove(event.name, oldOn[name], event.capture)
+    }
+  }
+}
+
+```
+
+## 8. createFnInvoker
+
+```javascript
+
+// 根绝用户提供的事件handler进行一个function包裹 用户可以定义一个数组handlers
+export function createFnInvoker (fns: Function | Array<Function>, vm: ?Component): Function {
+  function invoker () {
+    const fns = invoker.fns
+    if (Array.isArray(fns)) {
+      const cloned = fns.slice()
+      for (let i = 0; i < cloned.length; i++) {
+        invokeWithErrorHandling(cloned[i], null, arguments, vm, `v-on handler`)
+      }
+    } else {
+      // return handler return value for single handlers
+      return invokeWithErrorHandling(fns, null, arguments, vm, `v-on handler`)
+    }
+  }
+  invoker.fns = fns
+  return invoker
+}
+
+```

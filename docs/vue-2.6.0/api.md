@@ -119,7 +119,7 @@ export function nextTick (cb?: Function, ctx?: Object) {
 
 ```
 
-## mergeOptions合并方法和策略
+## 2. mergeOptions合并方法和策略
 
 ```javascript
 
@@ -194,5 +194,145 @@ export function mergeOptions (
   }
   return options
 }
+
+```
+
+## 3. $on绑定事件监听
+
+```javascript
+
+  // this.$on(key, fn)  this.$on(key, [fn])
+  Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {
+    const vm: Component = this
+    if (Array.isArray(event)) {
+      for (let i = 0, l = event.length; i < l; i++) {
+        // 拆解数组类型绑定
+        vm.$on(event[i], fn)
+      }
+    } else {
+      // _events事件map中推入要执行的fn
+      (vm._events[event] || (vm._events[event] = [])).push(fn)
+      // optimize hook:event cost by using a boolean flag marked at registration
+      // instead of a hash lookup
+      // 打上是否含有钩子监听标记
+      if (hookRE.test(event)) {
+        // 在测试用例中可以看到 只要是在对应钩子之前设置钩子事件监听 可以执行回调函数
+        // const vm = new Vue({
+        //   render () {},
+        //   beforeCreate () {
+        //     this.$on('hook:created', created)
+        //     this.$on('hook:mounted', mounted)
+        //     this.$on('hook:destroyed', destroyed)
+        //   }
+        // })
+        vm._hasHookEvent = true
+      }
+    }
+    return vm
+  }
+
+```
+
+## 4. $once一次性事件注册
+
+```javascript 
+
+  // 这个是this.$once   还有一种是 event.once  createOnceHandler
+  Vue.prototype.$once = function (event: string, fn: Function): Component {
+    const vm: Component = this
+    // 把fn构造成一个一次性调用函数
+    function on () {
+      // 在具体调用之前 先解除事件绑定
+      vm.$off(event, on)
+      fn.apply(vm, arguments)
+    }
+    on.fn = fn
+    vm.$on(event, on)
+    return vm
+  }
+
+```
+
+
+## 5. $off
+
+```javascript
+
+  Vue.prototype.$off = function (event?: string | Array<string>, fn?: Function): Component {
+    const vm: Component = this
+    // all 解除所有事件 清空_events事件map
+    if (!arguments.length) {
+      vm._events = Object.create(null)
+      return vm
+    }
+    // array of events
+    if (Array.isArray(event)) {
+      for (let i = 0, l = event.length; i < l; i++) {
+        // 多个事件逐个解除
+        vm.$off(event[i], fn)
+      }
+      return vm
+    }
+    // specific event
+    const cbs = vm._events[event]
+    if (!cbs) {
+      return vm
+    }
+    // 如果不存在fn 直接解除指定事件
+    if (!fn) {
+      vm._events[event] = null
+      return vm
+    }
+    // specific handler
+    let cb
+    let i = cbs.length
+    // 解除指定事件
+    while (i--) {
+      cb = cbs[i]
+      // cb === fn普通注册事件  cb.fn === fn解除once注册事件
+      // 所以这边解除的时候  fn不能有引用改变的情况 否则解除失败
+      if (cb === fn || cb.fn === fn) {
+        // 剔除指定事件
+        cbs.splice(i, 1)
+        break
+      }
+    }
+    return vm
+  }
+
+```
+
+## 6. $emit触发事件
+
+
+```javascript
+
+  Vue.prototype.$emit = function (event: string): Component {
+    const vm: Component = this
+    if (process.env.NODE_ENV !== 'production') {
+      const lowerCaseEvent = event.toLowerCase()
+      // 检查事件注册
+      if (lowerCaseEvent !== event && vm._events[lowerCaseEvent]) {
+        tip(
+          `Event "${lowerCaseEvent}" is emitted in component ` +
+          `${formatComponentName(vm)} but the handler is registered for "${event}". ` +
+          `Note that HTML attributes are case-insensitive and you cannot use ` +
+          `v-on to listen to camelCase events when using in-DOM templates. ` +
+          `You should probably use "${hyphenate(event)}" instead of "${event}".`
+        )
+      }
+    }
+    let cbs = vm._events[event]
+    if (cbs) {
+      cbs = cbs.length > 1 ? toArray(cbs) : cbs
+      const args = toArray(arguments, 1)
+      const info = `event handler for "${event}"`
+      for (let i = 0, l = cbs.length; i < l; i++) {
+        // 逐个调用回调函数且传递$emit中的参数数组
+        invokeWithErrorHandling(cbs[i], vm, args, vm, info)
+      }
+    }
+    return vm
+  }
 
 ```

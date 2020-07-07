@@ -10,13 +10,14 @@ module.exports = {
     sidebar: [
       '',
       ['/myself/', '反思'],
-      ['/todo/', '要和宝宝要做的一百件事'],
-      ['/noagain/', '让宝宝不开心的事情'],
       ['/source/', '资源收集'],
       {
         title: 'vue-2.6.0',
         children: [
           ['/vue-2.6.0/import', 'import vue后发生的事情'],
+          ['/vue-2.6.0/compiler', '模板解析与ast语法树生成'],
+          ['/vue-2.6.0/codegen', '代码生成codegen'],
+          ['/vue-2.6.0/vm', 'vm实例初始化过程'],
           ['/vue-2.6.0/api', 'vue源码阅读之api解析']
         ]
       },
