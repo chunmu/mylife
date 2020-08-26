@@ -10,8 +10,10 @@ module.exports = {
     sidebar: [
       '',
       ['/myself/', '反思'],
-      ['/fenfen/', '记录'],
+      ['/fenfen/', '时间线'],
       ['/source/', '资源收集'],
+      ['/todo/', 'todo'],
+      ['/noagain/', '不再发生'],
       {
         title: 'vue-2.6.0',
         children: [
