@@ -316,3 +316,16 @@ insert(parentElm=app, vnode.elm = child, ...) // 完成了dom关系的绑定
 
 ```
 
+### 3. v-model指令的实现原理
+
+
+假设有如下html
+
+```javascript
+
+
+
+
+```
+
+

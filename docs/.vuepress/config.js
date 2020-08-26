@@ -10,6 +10,7 @@ module.exports = {
     sidebar: [
       '',
       ['/myself/', '反思'],
+      ['/fenfen/', '记录'],
       ['/source/', '资源收集'],
       {
         title: 'vue-2.6.0',
@@ -26,6 +27,13 @@ module.exports = {
         children: [
           ['/javascript/javascript-1', 'javascript基础语法记录'],
           ['/javascript/crossenv', 'cross-env源码分析']
+        ]
+      },
+      {
+        title: 'babel',
+        children: [
+          ['/babel/polyfill', 'polyfill解析'],
+          ['/babel/babel-runtime', 'babel-runtime'],
         ]
       },
       ['/less/', 'less'],
